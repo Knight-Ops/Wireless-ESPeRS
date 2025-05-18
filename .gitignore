@@ -1,0 +1,45 @@
+# Rust
+/target/
+**/target/
+**/*.rs.bk
+Cargo.lock
+
+# Node.js / Svelte
+node_modules/
+build/
+.env
+.env.*
+
+# Editor/OS
+.DS_Store
+*.swp
+*.swo
+.idea/
+.vscode/
+*.log
+
+# Misc
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# SvelteKit
+.svelte-kit/
+
+# Ignore static build output
+xiao-web/build/
+
+# Ignore cache
+.cache/
+
+# Ignore test coverage
+coverage/
+
+# Ignore byproducts
+*.tgz
+
+# Ignore lock files for JS (optional, if you want reproducible builds, remove these lines)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
