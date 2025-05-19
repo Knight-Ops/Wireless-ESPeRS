@@ -21,6 +21,7 @@ Apply the [general coding guidelines](./general-coding.instructions.md) to all c
 - Ensure that any feature gates that are added are added to the Cargo.toml and documented
 - Ensure that any dependencies that are added are added to the Cargo.toml and documented
 - When making asynchronous functions, use `async fn` and `await` for calling other asynchronous functions, do not return a `Future` directly unless absolutely necessary
+- When reviewing Rust code, always make sure there is enough context to ensure the borrow checker is satisfied
 
 ## Related Rust Processes
 - Use `clippy` for linting and code quality checks

@@ -1,4 +1,5 @@
 #![feature(type_alias_impl_trait)]
+#![feature(impl_trait_in_assoc_type)]
 #![no_std]
 #![no_main]
 
@@ -9,8 +10,9 @@ use esp_hal::clock::CpuClock;
 use esp_hal::gpio::{Level, Output, OutputConfig};
 use esp_hal::rng::Rng;
 use esp_hal::timer::systimer::SystemTimer;
+use esp_wifi::wifi::WifiMode;
 use panic_rtt_target as _;
-use xiao_firmware::ap_configure;
+use xiao_firmware::{STATUS_WATCHER, WifiStatus, networking_task};
 
 extern crate alloc;
 
@@ -28,23 +30,26 @@ async fn main(spawner: Spawner) {
 
     info!("Embassy initialized!");
 
-    let mut rng = Rng::new(peripherals.RNG);
+    let rng = Rng::new(peripherals.RNG);
     let led = Output::new(peripherals.GPIO15, Level::Low, OutputConfig::default());
 
-    ap_configure(
-        &spawner,
-        peripherals.TIMG0,
-        peripherals.RADIO_CLK,
-        peripherals.WIFI,
-        rng.clone(),
-    )
-    .await;
+    spawner
+        .spawn(networking_task(
+            peripherals.TIMG0,
+            peripherals.RADIO_CLK,
+            peripherals.WIFI,
+            rng.clone(),
+        ))
+        .unwrap();
 
     spawner.spawn(led_blinker(led)).unwrap();
 
+    let sender = STATUS_WATCHER.sender();
+    Timer::after(Duration::from_secs(5)).await;
+    sender.send(WifiStatus::Enabled(WifiMode::Ap));
     loop {
-        // info!("Hello world!");
-        Timer::after(Duration::from_secs(1)).await;
+        Timer::after(Duration::from_secs(60)).await;
+        sender.send(WifiStatus::Disabled);
     }
 
     // for inspiration have a look at the examples at https://github.com/esp-rs/esp-hal/tree/esp-hal-v1.0.0-beta.0/examples/src/bin

@@ -2,9 +2,16 @@ use embassy_executor::Spawner;
 use embassy_net::Stack;
 use embassy_time::Duration;
 use picoserve::{AppBuilder, AppRouter, response::File, routing::get_service};
-use static_cell::make_static;
+use static_cell::{StaticCell, make_static};
 
-struct AppProps;
+/// Static Cell for AppProps'
+pub static APP_ROUTER: StaticCell<picoserve::Router<<AppProps as AppBuilder>::PathRouter>> =
+    StaticCell::new();
+
+/// Static Cell for Picoserve Config
+pub static CONFIG: StaticCell<picoserve::Config<Duration>> = StaticCell::new();
+
+pub struct AppProps;
 
 impl AppBuilder for AppProps {
     type PathRouter = impl picoserve::routing::PathRouter;
@@ -13,51 +20,51 @@ impl AppBuilder for AppProps {
         picoserve::Router::new()
             .route(
                 "/",
-                get_service(File::html(include_str!("../../xiao-web/build/index.html"))),
+                get_service(File::html(include_str!("../../xiao-web/dist/index.html"))),
             )
             .route(
                 "/wifi",
-                get_service(File::html(include_str!("../../xiao-web/build/wifi.html"))),
+                get_service(File::html(include_str!("../../xiao-web/dist/wifi.html"))),
             )
             .route(
                 "/thread",
-                get_service(File::html(include_str!("../../xiao-web/build/thread.html"))),
+                get_service(File::html(include_str!("../../xiao-web/dist/thread.html"))),
             )
             .route(
-                "/_app/immutable/assets/bundle.DzotERNF.css",
+                "/_app/immutable/assets/bundle.e5VEuPPr.css",
                 get_service(File::css(include_str!(
-                    "../../xiao-web/build/_app/immutable/assets/bundle.DzotERNF.css"
+                    "../../xiao-web/dist/_app/immutable/assets/bundle.e5VEuPPr.css"
                 ))),
             )
             .route(
-                "/_app/immutable/bundle.OrYBsVyU.js",
+                "/_app/immutable/bundle.Ds5NMssA.js",
                 get_service(File::javascript(include_str!(
-                    "../../xiao-web/build/_app/immutable/bundle.OrYBsVyU.js"
+                    "../../xiao-web/dist/_app/immutable/bundle.Ds5NMssA.js"
                 ))),
             )
     }
 }
 
-const WEB_TASK_POOL_SIZE: usize = 2;
+const WEB_TASK_POOL_SIZE: usize = 4;
 
-pub async fn start_web_server(spawner: &Spawner, stack: Stack<'static>) {
-    let app = make_static!(AppProps.build_app());
+pub async fn start_web_server(stack: Stack<'static>) {
+    let app = APP_ROUTER.init(AppProps.build_app());
 
-    let config = make_static!(
+    let config = CONFIG.init(
         picoserve::Config::new(picoserve::Timeouts {
             start_read_request: Some(Duration::from_secs(5)),
+            persistent_start_read_request: Some(Duration::from_secs(5)),
             read_request: Some(Duration::from_secs(2)),
             write: Some(Duration::from_secs(2)),
         })
-        .keep_connection_alive()
+        .keep_connection_alive(),
     );
 
-    for id in 0..WEB_TASK_POOL_SIZE {
-        spawner.must_spawn(web_task(id, stack, app, config));
-    }
+    let web_task_futures: [_; WEB_TASK_POOL_SIZE] =
+        core::array::from_fn(|id| web_task(id, stack, app, config));
+    embassy_futures::join::join_array(web_task_futures).await;
 }
 
-#[embassy_executor::task(pool_size = WEB_TASK_POOL_SIZE)]
 async fn web_task(
     id: usize,
     stack: embassy_net::Stack<'static>,
