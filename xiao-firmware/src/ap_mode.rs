@@ -110,9 +110,9 @@ pub async fn networking_task(
                             async {
                                 core::future::join!(
                                     connection(&mut controller, mode),
-                                    net_task_async(runner),
-                                    run_dhcp_async(stack, gw_ip_addr_str),
-                                    start_web_server_async(stack),
+                                    net_task(runner),
+                                    run_dhcp(stack, gw_ip_addr_str),
+                                    start_web_server(stack),
                                 )
                                 .await;
                             },
@@ -145,8 +145,8 @@ pub async fn networking_task(
                             async {
                                 core::future::join!(
                                     connection(&mut controller, mode),
-                                    net_task_async(runner),
-                                    start_web_server_async(stack),
+                                    net_task(runner),
+                                    start_web_server(stack),
                                 )
                                 .await;
                             },
@@ -204,11 +204,12 @@ async fn connection(controller: &mut WifiController<'static>, mode: WifiMode) {
             }
             WifiMode::Sta => {
                 // TODO: Add station mode connection logic here
+                todo!("Implement station mode connection logic");
                 yield_now().await;
             }
-            _ => {
-                warn!("Unsupported WifiMode");
-                return;
+            WifiMode::ApSta => {
+                warn!("Unsupported WifiMode::ApSta");
+                Timer::after_secs(3).await;
             }
         }
     }
@@ -216,13 +217,13 @@ async fn connection(controller: &mut WifiController<'static>, mode: WifiMode) {
 
 /// Contains AI-generated content.
 /// Async version of net_task.
-async fn net_task_async(mut runner: Runner<'static, WifiDevice<'static>>) {
+async fn net_task(mut runner: Runner<'static, WifiDevice<'static>>) {
     runner.run().await;
 }
 
 /// Contains AI-generated content.
 /// Async version of run_dhcp, refactored to use embassy-net UDP sockets.
-async fn run_dhcp_async(stack: Stack<'static>, gw_ip_addr: &'static str) {
+async fn run_dhcp(stack: Stack<'static>, gw_ip_addr: &'static str) {
     use core::str::FromStr;
     use embassy_net::IpEndpoint;
     use embassy_net::Ipv4Address;
@@ -244,6 +245,6 @@ async fn run_dhcp_async(stack: Stack<'static>, gw_ip_addr: &'static str) {
 
 /// Contains AI-generated content.
 /// Async version of start_web_server.
-async fn start_web_server_async(stack: Stack<'static>) {
+async fn start_web_server(stack: Stack<'static>) {
     crate::web_server::start_web_server(stack).await;
 }
