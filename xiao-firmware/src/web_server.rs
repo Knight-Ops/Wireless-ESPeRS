@@ -45,7 +45,7 @@ impl AppBuilder for AppProps {
     }
 }
 
-const WEB_TASK_POOL_SIZE: usize = 4;
+const WEB_TASK_POOL_SIZE: usize = 2;
 
 pub async fn start_web_server(stack: Stack<'static>) {
     let app = APP_ROUTER.init(AppProps.build_app());

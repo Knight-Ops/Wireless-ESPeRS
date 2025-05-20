@@ -36,8 +36,8 @@ pub enum WifiStatus {
 pub static STATUS_WATCHER: Watch<CriticalSectionRawMutex, WifiStatus, 2> = Watch::new();
 
 /// Static Cell for StackResources
-pub static AP_STACK_RESOURCES: StaticCell<StackResources<8>> = StaticCell::new();
-pub static STA_STACK_RESOURCES: StaticCell<StackResources<8>> = StaticCell::new();
+pub static AP_STACK_RESOURCES: StaticCell<StackResources<6>> = StaticCell::new();
+pub static STA_STACK_RESOURCES: StaticCell<StackResources<6>> = StaticCell::new();
 
 /// Static Cell for ESP-WiFi Stack
 pub static ESP_WIFI_STACK: StaticCell<EspWifiController<'static>> = StaticCell::new();
