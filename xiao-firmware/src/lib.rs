@@ -7,3 +7,8 @@ mod ap_mode;
 mod web_server;
 
 pub use crate::ap_mode::{STATUS_WATCHER, WifiStatus, networking_task};
+
+// REMOVE ONCE WE HAVE STORAGE IMPLEMENTED
+#[unsafe(link_section = ".kvs_section")]
+#[used]
+static _KVSSPACE: [u8; 0] = [];

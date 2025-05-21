@@ -1,5 +1,15 @@
+use std::{env, fs, path::PathBuf};
+
 fn main() {
+    let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
+    fs::write(out_dir.join("memory.x"), include_bytes!("memory.x"))
+        .expect("failed to write memory.x");
+    // Tell rustc to look in OUT_DIR first for linker scripts
+    println!("cargo:rustc-link-search={}", out_dir.display());
+
     linker_be_nice();
+
+    // println!("cargo:rustc-link-arg=-Tmemory.x");
     println!("cargo:rustc-link-arg=-Tdefmt.x");
     // make sure linkall.x is the last linker script (otherwise might cause problems with flip-link)
     println!("cargo:rustc-link-arg=-Tlinkall.x");
@@ -15,7 +25,9 @@ fn linker_be_nice() {
             "undefined-symbol" => match what.as_str() {
                 "_defmt_timestamp" => {
                     eprintln!();
-                    eprintln!("💡 `defmt` not found - make sure `defmt.x` is added as a linker script and you have included `use defmt_rtt as _;`");
+                    eprintln!(
+                        "💡 `defmt` not found - make sure `defmt.x` is added as a linker script and you have included `use defmt_rtt as _;`"
+                    );
                     eprintln!();
                 }
                 "_stack_start" => {
